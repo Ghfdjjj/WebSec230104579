@@ -10,7 +10,7 @@
 <body>
 
 <div class="container mt-4">
-
+    <!-- Navigation Tabs -->
     <ul class="nav nav-tabs">
         <li class="nav-item">
             <a class="nav-link {{ request()->is('/') ? 'active' : '' }}" href="{{ url('/') }}">Home</a>
@@ -24,8 +24,22 @@
         <li class="nav-item">
             <a class="nav-link {{ request()->is('multiplication-table') ? 'active' : '' }}" href="{{ url('/multiplication-table') }}">Multiplication Table</a>
         </li>
+        <li class="nav-item">
+            <a class="nav-link {{ request()->is('MiniTest') ? 'active' : '' }}" href="{{ url('/MiniTest') }}">MiniTest</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {{ request()->is('Transcript') ? 'active' : '' }}" href="{{ url('/Transcript') }}">Transcript</a>
+        </li>
+        <!-- Add Grades and Users Tabs -->
+        <li class="nav-item">
+            <a class="nav-link {{ request()->is('grades') ? 'active' : '' }}" href="{{ url('/grades') }}">Grades</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {{ request()->is('users') ? 'active' : '' }}" href="{{ url('/users') }}">Users</a>
+        </li>
     </ul>
 
+    <!-- Content Section -->
     <div class="mt-3">
         <div class="card card-body">
             @yield('content')
