@@ -10,7 +10,7 @@
 <body>
 
 <div class="container mt-4">
-    <!-- Navigation Tabs -->
+
     <ul class="nav nav-tabs">
         <li class="nav-item">
             <a class="nav-link {{ request()->is('/') ? 'active' : '' }}" href="{{ url('/') }}">Home</a>
@@ -30,7 +30,7 @@
         <li class="nav-item">
             <a class="nav-link {{ request()->is('Transcript') ? 'active' : '' }}" href="{{ url('/Transcript') }}">Transcript</a>
         </li>
-        <!-- Add Grades and Users Tabs -->
+
         <li class="nav-item">
             <a class="nav-link {{ request()->is('grades') ? 'active' : '' }}" href="{{ url('/grades') }}">Grades</a>
         </li>
@@ -39,7 +39,6 @@
         </li>
     </ul>
 
-    <!-- Content Section -->
     <div class="mt-3">
         <div class="card card-body">
             @yield('content')

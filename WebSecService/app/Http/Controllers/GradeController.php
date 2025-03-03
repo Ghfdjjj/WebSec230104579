@@ -12,8 +12,19 @@ class GradeController extends Controller
      */
     public function index()
     {
-        $grades = Grade::all();
-        return view('grades.index', compact('grades'));
+        // Group grades by term
+        $grades = Grade::all()->groupBy('term');
+    
+        // Calculate Term GPA, CGPA, and CCH
+        $termGPA = [];
+        $cgpa = Grade::calculateCGPA();
+        $cch = Grade::calculateCCH();
+    
+        foreach ($grades as $term => $termGrades) {
+            $termGPA[$term] = Grade::calculateTermGPA($term);
+        }
+    
+        return view('grades.index', compact('grades', 'termGPA', 'cgpa', 'cch'));
     }
 
     /**

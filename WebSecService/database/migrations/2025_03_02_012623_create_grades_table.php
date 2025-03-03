@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('grades', function (Blueprint $table) {
             $table->id();
-            $table->string('course_name'); // Ensure this matches the form field name
+            $table->string('course_name');
             $table->string('grade');
             $table->integer('credit_hours');
             $table->string('term');
