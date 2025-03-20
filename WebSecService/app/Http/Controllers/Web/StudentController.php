@@ -12,9 +12,9 @@ class StudentController extends Controller
     /**
      * Display a listing of all student profiles.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $students = Student::where('user_id', auth()->id())->get();
+        $students = Student::all();
         return view('students.index', compact('students'));
     }
 
@@ -23,6 +23,7 @@ class StudentController extends Controller
      */
     public function create()
     {
+        $this->ensureIsAdmin();
         return view('students.create'); // Ensure students.create extends layouts.master
     }
 
@@ -31,6 +32,7 @@ class StudentController extends Controller
      */
     public function store(Request $request)
     {
+        $this->ensureIsAdmin();
         // Validate the request
         $request->validate([
             'name' => 'required|string|max:255',
@@ -55,6 +57,7 @@ class StudentController extends Controller
      */
     public function edit(Student $student)
     {
+        $this->ensureIsAdmin();
         if ($student->user_id !== auth()->id()) {
             abort(403);
         }
@@ -67,6 +70,7 @@ class StudentController extends Controller
      */
     public function update(Request $request, Student $student)
     {
+        $this->ensureIsAdmin();
         if ($student->user_id !== auth()->id()) {
             abort(403);
         }
@@ -87,6 +91,7 @@ class StudentController extends Controller
      */
     public function destroy(Student $student)
     {
+        $this->ensureIsAdmin();
         if ($student->user_id !== auth()->id()) {
             abort(403);
         }
@@ -94,5 +99,15 @@ class StudentController extends Controller
         $student->delete();
         return redirect()->route('students.index')
                          ->with('success', 'Student deleted successfully');
+    }
+
+    /**
+     * Ensure the authenticated user is an admin.
+     */
+    private function ensureIsAdmin()
+    {
+        if (!auth()->check() || auth()->user()->role !== 'admin') {
+            abort(403, 'Unauthorized action.');
+        }
     }
 }
