@@ -7,14 +7,11 @@
     <h1>Products</h1>
 
     <!-- Button to Create Product -->
+    @if(auth()->check() && auth()->user()->role === 'admin')
     <div class="mb-3">
         <a href="{{ route('products.create') }}" class="btn btn-primary">Add New Product</a>
     </div>
-
-    <!-- Button to Create Student -->
-    <div class="mb-3">
-        <a href="{{ route('students.create') }}" class="btn btn-success">Create Student</a>
-    </div>
+    @endif
 
     <!-- Search/Filter Form -->
     <form method="GET" action="{{ route('products_list') }}" class="mb-4">
@@ -59,14 +56,14 @@
                     <h3>{{ $product->name }}</h3>
                     <p>{{ $product->description }}</p>
                     <p><strong>Price:</strong> ${{ $product->price }}</p>
-                    @auth
+                    @if(auth()->check() && auth()->user()->role === 'admin')
                         <a href="{{ route('products_edit', $product->id) }}" class="btn btn-primary">Edit</a>
                         <form action="{{ route('products.destroy', $product->id) }}" method="POST" onsubmit="return confirm('Are you sure?');" style="display:inline;">
                             @csrf
-                            @method('DELETE') <!-- This tells Laravel to treat this as a DELETE request -->
+                            @method('DELETE')
                             <button type="submit" class="btn btn-danger">Delete</button>
                         </form>
-                    @endauth
+                    @endif
                 </div>
             </div>
         </div>
