@@ -1,37 +1,52 @@
-<nav class="navbar navbar-expand-sm bg-light">
-    <div class="container-fluid">
-        <ul class="navbar-nav">
-            <li class="nav-item">
-                <a class="nav-link" href="./">Home</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="{{route('products_list')}}">Products</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="{{route('students.index')}}">Students</a>
-            </li>
-        </ul>
-        <ul class="navbar-nav">
-            @auth
-            <li class="nav-item">
-                <a class="nav-link" href="{{ route('profile') }}">{{ Auth::user()->name }}</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                    Logout
-                </a>
-                <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-                    @csrf
-                </form>
-            </li>
-            @else
-            <li class="nav-item">
-                <a class="nav-link" href="{{route('login')}}">Login</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="{{route('register')}}">Register</a>
-            </li>
-            @endauth
-        </ul>
+<!-- Navigation -->
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container">
+        <a class="navbar-brand" href="{{ route('home') }}">WebSec Store</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('store.index') }}">Products</a>
+                </li>
+                @auth
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('cart.index') }}">Cart</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('purchase.history') }}">My Purchases</a>
+                    </li>
+                    @if(auth()->user()->role === 'employee' || auth()->user()->role === 'admin')
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('admin.products.index') }}">Manage Products</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('admin.customers.index') }}">Manage Customers</a>
+                        </li>
+                    @endif
+                @endauth
+            </ul>
+            <ul class="navbar-nav">
+                @guest
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('login') }}">Login</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('register') }}">Register</a>
+                    </li>
+                @else
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('profile.show') }}">Profile</a>
+                    </li>
+                    <li class="nav-item">
+                        <form action="{{ route('logout') }}" method="POST" class="d-inline">
+                            @csrf
+                            <button type="submit" class="btn btn-link nav-link">Logout</button>
+                        </form>
+                    </li>
+                @endguest
+            </ul>
+        </div>
     </div>
 </nav>

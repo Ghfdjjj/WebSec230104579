@@ -1,32 +1,69 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\UserController;
-use App\Http\Controllers\GradeController;
-use App\Http\Controllers\Auth\UsersController; // Updated import
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\Web\ProfileController;
+use App\Http\Controllers\Web\StoreController;
 use App\Http\Controllers\Web\ProductsController;
-use App\Http\Controllers\Web\StudentController; // Updated import
-use App\Http\Controllers\Web\HomeController; // Ensure this matches the namespace
-use App\Http\Controllers\ProductController; // Import ProductController
-use App\Http\Controllers\Auth\ProfileController; // Updated import
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth; // Ensure this line is added
+use App\Http\Controllers\Web\PurchaseController;
+use App\Http\Controllers\Web\TransactionController;
+use App\Http\Controllers\Auth\UsersController;
+
+// Public Routes
+Route::get('/', [StoreController::class, 'index'])->name('home');
+Route::get('/store', [StoreController::class, 'index'])->name('store.index');
+Route::get('/store/products/{product}', [StoreController::class, 'show'])->name('store.product.show');
 
 // Authentication Routes
-Route::get('register', [UsersController::class, 'register'])->name('register');
-Route::post('register', [UsersController::class, 'doRegister'])->name('do_register');
-Route::get('login', [UsersController::class, 'login'])->name('login');
-Route::post('login', [UsersController::class, 'doLogin'])->name('do_login');
-Route::post('/logout', [App\Http\Controllers\Auth\LoginController::class, 'logout'])->name('logout'); // Ensure this line is added
+Route::middleware('guest')->group(function () {
+    Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
+    Route::post('login', [LoginController::class, 'login']);
+    Route::get('register', [RegisterController::class, 'showRegistrationForm'])->name('register');
+    Route::post('register', [RegisterController::class, 'register']);
+});
 
-// Product Routes
+Route::post('logout', [LoginController::class, 'logout'])->name('logout');
+
+// Customer Routes
 Route::middleware(['auth'])->group(function () {
-    Route::get('/products', [ProductsController::class, 'index'])->name('products_list');
-    Route::get('/products/create', [ProductsController::class, 'create'])->name('products.create');
-    Route::post('/products', [ProductsController::class, 'store'])->name('products.store');
-    Route::get('/products/{product}/edit', [ProductsController::class, 'edit'])->name('products_edit');
-    Route::post('/products/{product}', [ProductsController::class, 'save'])->name('products_save');
-    Route::delete('/products/{product}', [ProductsController::class, 'destroy'])->name('products.destroy');
+    // Profile
+    Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
+    Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password.update');
+    
+    // Cart & Purchases
+    Route::get('/cart', [PurchaseController::class, 'cart'])->name('cart.index');
+    Route::post('/cart/add/{product}', [PurchaseController::class, 'addToCart'])->name('cart.add');
+    Route::delete('/cart/remove/{product}', [PurchaseController::class, 'removeFromCart'])->name('cart.remove');
+    Route::post('/purchase', [PurchaseController::class, 'checkout'])->name('purchase.checkout');
+    Route::get('/purchases', [PurchaseController::class, 'history'])->name('purchase.history');
+    Route::get('/purchases/{purchase}', [PurchaseController::class, 'show'])->name('purchase.show');
+});
+
+// Employee Routes
+Route::middleware(['auth', 'role:employee'])->prefix('admin')->name('admin.')->group(function () {
+    // Product Management
+    Route::resource('products', ProductsController::class);
+    
+    // Customer Management
+    Route::get('/customers', [UsersController::class, 'customers'])->name('customers.index');
+    Route::get('/customers/{user}', [UsersController::class, 'show'])->name('customers.show');
+    Route::post('/customers/{user}/credit', [TransactionController::class, 'addCredit'])->name('customers.credit.add');
+});
+
+// Admin Routes
+Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+    // Employee Management
+    Route::get('/employees', [UsersController::class, 'employees'])->name('employees.index');
+    Route::get('/employees/create', [UsersController::class, 'createEmployee'])->name('employees.create');
+    Route::post('/employees', [UsersController::class, 'storeEmployee'])->name('employees.store');
+    Route::delete('/employees/{user}', [UsersController::class, 'destroyEmployee'])->name('employees.destroy');
+    
+    // Transaction Management
+    Route::get('/transactions', [TransactionController::class, 'index'])->name('transactions.index');
+    Route::get('/transactions/{transaction}', [TransactionController::class, 'show'])->name('transactions.show');
 });
 
 Route::get('/even-numbers', function () {
@@ -69,8 +106,6 @@ Route::get('/tabs', function () {
     return view('tabs', compact('users', 'grades'));
 });
 
-// Grades routes
-
 // Admin User Management Routes
 Route::middleware('auth')->group(function () {
     Route::get('users', [UsersController::class, 'index'])->name('users_index');
@@ -85,25 +120,20 @@ Route::middleware('auth')->group(function () {
 
 // Student routes
 Route::middleware(['auth'])->group(function () {
-    Route::get('/students', [StudentController::class, 'index'])->name('students.index');
-    Route::get('/students/create', [StudentController::class, 'create'])->name('students.create');
-    Route::post('/students', [StudentController::class, 'store'])->name('students.store');
-    Route::get('/students/{student}/edit', [StudentController::class, 'edit'])->name('students.edit');
-    Route::put('/students/{student}', [StudentController::class, 'update'])->name('students.update');
-    Route::delete('/students/{student}', [StudentController::class, 'destroy'])->name('students.destroy');
-    Route::resource('students', \App\Http\Controllers\Web\StudentController::class);
+    Route::get('/students', [App\Http\Controllers\Web\StudentController::class, 'index'])->name('students.index');
+    Route::get('/students/create', [App\Http\Controllers\Web\StudentController::class, 'create'])->name('students.create');
+    Route::post('/students', [App\Http\Controllers\Web\StudentController::class, 'store'])->name('students.store');
+    Route::get('/students/{student}/edit', [App\Http\Controllers\Web\StudentController::class, 'edit'])->name('students.edit');
+    Route::put('/students/{student}', [App\Http\Controllers\Web\StudentController::class, 'update'])->name('students.update');
+    Route::delete('/students/{student}', [App\Http\Controllers\Web\StudentController::class, 'destroy'])->name('students.destroy');
 });
 
-Route::get('profile/{user?}', [UsersController::class, 'profile'])->name('profile');
 Route::get('users/edit/{user?}', [UsersController::class, 'edit'])->name('users_edit');
 Route::post('users/save/{user}', [UsersController::class, 'save'])->name('users_save');
-Route::get('/home', [HomeController::class, 'index'])->name('home');
+Route::get('/home', [App\Http\Controllers\Web\HomeController::class, 'index'])->name('home');
 
 Auth::routes();
 
-Route::get('/home', [HomeController::class, 'index'])->name('home');
+Route::get('/home', [App\Http\Controllers\Web\HomeController::class, 'index'])->name('home');
 
-Route::get('/', [HomeController::class, 'index'])->name('home');
-
-// Add a route for the profile page
-Route::get('/profile', [UsersController::class, 'profile'])->name('profile')->middleware('auth');
+Route::get('/', [App\Http\Controllers\Web\HomeController::class, 'index'])->name('home');

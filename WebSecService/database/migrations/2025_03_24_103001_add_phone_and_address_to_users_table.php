@@ -9,13 +9,12 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up()
+    public function up(): void
     {
-        if (!Schema::hasColumn('users', 'role')) {
-            Schema::table('users', function (Blueprint $table) {
-                $table->string('role')->default('customer');
-            });
-        }
+        Schema::table('users', function (Blueprint $table) {
+            $table->string('phone')->nullable()->after('email');
+            $table->text('address')->nullable()->after('phone');
+        });
     }
 
     /**
@@ -24,7 +23,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('role');
+            $table->dropColumn(['phone', 'address']);
         });
     }
-};
+}; 

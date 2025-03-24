@@ -3,143 +3,126 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use App\Models\Product;
-use Illuminate\Support\Str;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class ProductsController extends Controller
 {
-    // Protect routes except listing (public listing)
-    public function __construct()
-    {
-        $this->middleware('auth')->except(['list', 'index']);
-    }
-
-    // Private method to ensure only admin users can perform CRUD operations
-    private function ensureIsAdmin()
-    {
-        if (!auth()->check() || auth()->user()->role !== 'admin') {
-            abort(403, 'Unauthorized action.');
-        }
-    }
-
-    // List products with filters (publicly accessible)
-    public function list(Request $request)
+    /**
+     * Display a listing of the products.
+     */
+    public function index(Request $request)
     {
         $query = Product::query();
 
-        if ($request->has('keywords')) {
-            $query->where('name', 'like', '%' . $request->keywords . '%');
-        }
-        if ($request->has('min_price')) {
-            $query->where('price', '>=', $request->min_price);
-        }
-        if ($request->has('max_price')) {
-            $query->where('price', '<=', $request->max_price);
-        }
-        if ($request->has('order_by')) {
-            $direction = $request->order_direction ?? 'ASC';
-            $query->orderBy($request->order_by, $direction);
+        if ($request->has('search')) {
+            $search = $request->get('search');
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%");
+            });
         }
 
-        $products = $query->get();
-        return view('products.list', compact('products'));
+        $products = $query->orderBy('created_at', 'desc')
+                         ->paginate(10);
+
+        return view('admin.products.index', compact('products'));
     }
 
-    // Public listing of all products (accessible to everyone)
-    public function index(Request $request)
-    {
-        $products = Product::all();
-        return view('products.list', compact('products'));
-    }
-
-    // Show form for creating a new product (admin only)
+    /**
+     * Show the form for creating a new product.
+     */
     public function create()
     {
-        $this->ensureIsAdmin();
-        return view('products.create');
+        $this->authorize('create', Product::class);
+        return view('admin.products.create');
     }
 
-    // Store a new product (admin only)
+    /**
+     * Store a newly created product in storage.
+     */
     public function store(Request $request)
     {
-        $this->ensureIsAdmin();
+        $this->authorize('create', Product::class);
 
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'price' => 'required|numeric',
-            'photo' => 'required|image',
-            'model' => 'nullable|string',
+            'description' => 'required|string',
+            'price' => 'required|numeric|min:0',
+            'stock_quantity' => 'required|integer|min:0',
+            'image' => 'nullable|image|max:2048',
+            'is_active' => 'boolean',
         ]);
 
-        $photoPath = $request->file('photo')->store('product_images', 'public');
+        $product = new Product($validated);
+        
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('products', 'public');
+            $product->image_path = $path;
+        }
 
-        $product = new Product();
-        $product->name = $request->name;
-        $product->description = $request->description;
-        $product->price = $request->price;
-        $product->photo = $photoPath;
-        $product->code = Str::random(10);
-        $product->model = $request->model ?? 'DEFAULT_MODEL';
         $product->save();
 
-        return redirect()->route('products_list')->with('success', 'Product added successfully.');
+        return redirect()->route('admin.products.index')
+                        ->with('success', 'Product added successfully.');
     }
 
-    // Show form for editing a product (admin only)
+    /**
+     * Show the form for editing the specified product.
+     */
     public function edit(Product $product)
     {
-        $this->ensureIsAdmin();
-        return view('products.edit', compact('product'));
+        $this->authorize('update', $product);
+        return view('admin.products.edit', compact('product'));
     }
 
-    // Save or update product (admin only)
-    public function save(Request $request, Product $product = null)
+    /**
+     * Update the specified product in storage.
+     */
+    public function update(Request $request, Product $product)
     {
-        $this->ensureIsAdmin();
+        $this->authorize('update', $product);
 
-        $request->validate([
-            'code'        => 'required|string|max:32',
-            'name'        => 'required|string|max:128',
-            'model'       => 'required|string|max:256',
-            'description' => 'required|string|max:1024',
-            'price'       => 'required|numeric',
-            'photo'       => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'required|string',
+            'price' => 'required|numeric|min:0',
+            'stock_quantity' => 'required|integer|min:0',
+            'image' => 'nullable|image|max:2048',
+            'is_active' => 'boolean',
         ]);
 
-        if (!$product) {
-            $product = new Product();
+        if ($request->hasFile('image')) {
+            // Delete old image if it exists
+            if ($product->image_path) {
+                Storage::disk('public')->delete($product->image_path);
+            }
+            $path = $request->file('image')->store('products', 'public');
+            $product->image_path = $path;
         }
 
-        $product->fill($request->except('photo'));
+        $product->update($validated);
 
-        // Handle image upload
-        if ($request->hasFile('photo')) {
-            $photoPath = $request->file('photo')->store('product_images', 'public');
-            $product->photo = $photoPath;
-        }
-
-        $product->save();
-
-        return redirect()->route('products_list')->with('success', 'Product saved successfully!');
+        return redirect()->route('admin.products.index')
+                        ->with('success', 'Product updated successfully.');
     }
 
-    // Delete a product (admin only)
+    /**
+     * Remove the specified product from storage.
+     */
     public function destroy(Product $product)
     {
-        $this->ensureIsAdmin(); // This will abort if the user is not an admin.
+        $this->authorize('delete', $product);
 
-        // Delete the product image if it exists
-        if ($product->photo && Storage::exists('public/' . $product->photo)) {
-            Storage::delete('public/' . $product->photo);
+        // Delete product image if it exists
+        if ($product->image_path) {
+            Storage::disk('public')->delete($product->image_path);
         }
 
-        // Delete the product from the database
         $product->delete();
 
-        return redirect()->route('products_list')->with('success', 'Product deleted successfully.');
+        return redirect()->route('admin.products.index')
+                        ->with('success', 'Product deleted successfully.');
     }
 }
