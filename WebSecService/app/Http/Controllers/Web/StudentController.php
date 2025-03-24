@@ -45,7 +45,7 @@ class StudentController extends Controller
             'name' => $request->name,
             'age' => $request->age,
             'major' => $request->major,
-            'user_id' => auth()->id(),
+            'user_id' => Auth::id(),
         ]);
 
         // Redirect to students index with success message
@@ -58,7 +58,10 @@ class StudentController extends Controller
     public function edit(Student $student)
     {
         $this->ensureIsAdmin();
-        if ($student->user_id !== auth()->id()) {
+
+        $student = Auth::find(Auth::id());
+
+        if ($student->user_id !== Auth::id()) {
             abort(403);
         }
 
@@ -71,7 +74,7 @@ class StudentController extends Controller
     public function update(Request $request, Student $student)
     {
         $this->ensureIsAdmin();
-        if ($student->user_id !== auth()->id()) {
+        if ($student->user_id !== Auth::id()) {
             abort(403);
         }
 
