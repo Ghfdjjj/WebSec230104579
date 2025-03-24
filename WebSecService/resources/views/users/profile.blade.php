@@ -12,20 +12,21 @@
                     <p><strong>Name:</strong> {{ $user->name }}</p>
                     <p><strong>Email:</strong> {{ $user->email }}</p>
                     <p><strong>Credit Balance:</strong> ${{ number_format($user->credit_balance, 2) }}</p>
-                    <p><strong>Role:</strong> {{ ucfirst($user->role) }}</p>
+                    <p><strong>Role:</strong> {{ ucfirst($user->getRoleNames()->first()) }}</p>
+                    @if($user->phone)
+                        <p><strong>Phone:</strong> {{ $user->phone }}</p>
+                    @endif
+                    @if($user->address)
+                        <p><strong>Address:</strong> {{ $user->address }}</p>
+                    @endif
                 </div>
             </div>
 
             <div class="card">
                 <div class="card-body">
                     <h3 class="card-title">Actions</h3>
-                    <a href="{{ route('password.request') }}" class="btn btn-primary mb-2">Change Password</a>
-                    <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-                        @csrf
-                    </form>
-                    <a href="#" class="btn btn-danger" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                        Logout
-                    </a>
+                    <a href="{{ route('profile.edit') }}" class="btn btn-primary mb-2">Edit Profile</a>
+                    <a href="{{ route('password.request') }}" class="btn btn-secondary mb-2">Change Password</a>
                 </div>
             </div>
         </div>

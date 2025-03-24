@@ -144,25 +144,4 @@ class User extends Authenticatable
         $this->credit_balance -= $amount;
         $this->save();
     }
-
-    /**
-     * Check if the user has a specific role.
-     *
-     * @param string $role
-     * @return bool
-     */
-    public function hasRole($role)
-    {
-        return $this->role === $role;
-    }
-
-    /**
-     * Check if the user is an admin.
-     *
-     * @return bool
-     */
-    public function isAdmin()
-    {
-        return $this->role === 'admin';
-    }
 }

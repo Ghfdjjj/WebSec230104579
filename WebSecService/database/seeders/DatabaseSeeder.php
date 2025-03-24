@@ -3,7 +3,7 @@
 namespace Database\Seeders;
 use App\Models\User;
 use Spatie\Permission\Models\Role;
-
+use Database\Seeders\AdminSeeder;
 
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -15,7 +15,7 @@ class DatabaseSeeder extends Seeder
      */
 
     
-     public function run()
+     public function run(): void
      {
          // Ensure the admin role exists
          if (!Role::where('name', 'admin')->exists()) {
@@ -32,6 +32,9 @@ class DatabaseSeeder extends Seeder
      
              $user->assignRole('admin');
          }
-        }
 
+         $this->call([
+            AdminSeeder::class,
+        ]);
     }
+}

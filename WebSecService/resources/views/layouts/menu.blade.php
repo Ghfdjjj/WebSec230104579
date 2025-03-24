@@ -17,7 +17,7 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{{ route('purchase.history') }}">My Purchases</a>
                     </li>
-                    @if(auth()->user()->role === 'employee' || auth()->user()->role === 'admin')
+                    @if(auth()->user()->hasRole(['employee', 'admin']))
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('admin.products.index') }}">Manage Products</a>
                         </li>
